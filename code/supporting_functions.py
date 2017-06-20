@@ -1,3 +1,4 @@
+
 import numpy as np
 import cv2
 from PIL import Image
@@ -20,7 +21,7 @@ def update_rover(Rover, data):
             if np.isfinite(tot_time):
                   Rover.total_time = tot_time
       # Print out the fields in the telemetry data dictionary
-      print(data.keys())
+      # print(data.keys())
       # The current speed of the rover in m/s
       Rover.vel = np.float(data["speed"])
       # The current position of the rover
@@ -38,8 +39,8 @@ def update_rover(Rover, data):
       # Near sample flag
       Rover.near_sample = np.int(data["near_sample"])
 
-      print('speed =',Rover.vel, 'position =', Rover.pos, 'throttle =', 
-      Rover.throttle, 'steer_angle =', Rover.steer, 'near_sample', Rover.near_sample, data["picking_up"])
+      # print('speed =',Rover.vel, 'position =', Rover.pos, 'throttle =',
+      # Rover.throttle, 'steer_angle =', Rover.steer, 'near_sample', Rover.near_sample, data["picking_up"])
 
       # Get the current image from the center camera of the rover
       imgString = data["image"]
@@ -56,7 +57,7 @@ def create_output_images(Rover):
       if np.max(Rover.worldmap[:,:,2]) > 0:
             nav_pix = Rover.worldmap[:,:,2] > 0
             navigable = Rover.worldmap[:,:,2] * (255 / np.mean(Rover.worldmap[nav_pix, 2]))
-      else: 
+      else:
             navigable = Rover.worldmap[:,:,2]
       if np.max(Rover.worldmap[:,:,0]) > 0:
             obs_pix = Rover.worldmap[:,:,0] > 0
@@ -89,7 +90,7 @@ def create_output_images(Rover):
                   # sample on the map
                   if np.min(rock_sample_dists) < 3:
                         Rover.samples_found[idx] = 1
-                        map_add[test_rock_y-rock_size:test_rock_y+rock_size, 
+                        map_add[test_rock_y-rock_size:test_rock_y+rock_size,
                         test_rock_x-rock_size:test_rock_x+rock_size, :] = 255
 
       # Calculate some statistics on the map results
@@ -103,7 +104,7 @@ def create_output_images(Rover):
       tot_map_pix = np.float(len((Rover.ground_truth[:,:,1].nonzero()[0])))
       # Calculate the percentage of ground truth map that has been successfully found
       perc_mapped = round(100*good_nav_pix/tot_map_pix, 1)
-      # Calculate the number of good map pixel detections divided by total pixels 
+      # Calculate the number of good map pixel detections divided by total pixels
       # found to be navigable terrain
       if tot_nav_pix > 0:
             fidelity = round(100*good_nav_pix/(tot_nav_pix), 1)
@@ -112,13 +113,13 @@ def create_output_images(Rover):
       # Flip the map for plotting so that the y-axis points upward in the display
       map_add = np.flipud(map_add).astype(np.float32)
       # Add some text about map and rock sample detection results
-      cv2.putText(map_add,"Time: "+str(np.round(Rover.total_time, 1))+' s', (0, 10), 
+      cv2.putText(map_add,"Time: "+str(np.round(Rover.total_time, 1))+' s', (0, 10),
                   cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255), 1)
-      cv2.putText(map_add,"Mapped: "+str(perc_mapped)+'%', (0, 25), 
+      cv2.putText(map_add,"Mapped: "+str(perc_mapped)+'%', (0, 25),
                   cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255), 1)
-      cv2.putText(map_add,"Fidelity: "+str(fidelity)+'%', (0, 40), 
+      cv2.putText(map_add,"Fidelity: "+str(fidelity)+'%', (0, 40),
                   cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255), 1)
-      cv2.putText(map_add,"Rocks Found: "+str(np.sum(Rover.samples_found)), (0, 55), 
+      cv2.putText(map_add,"Rocks Found: "+str(np.sum(Rover.samples_found)), (0, 55),
                   cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255), 1)
 
       # Convert map and vision image to base64 strings for sending to server
@@ -126,7 +127,7 @@ def create_output_images(Rover):
       buff = BytesIO()
       pil_img.save(buff, format="JPEG")
       encoded_string1 = base64.b64encode(buff.getvalue()).decode("utf-8")
-      
+
       pil_img = Image.fromarray(Rover.vision_image.astype(np.uint8))
       buff = BytesIO()
       pil_img.save(buff, format="JPEG")

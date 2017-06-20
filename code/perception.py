@@ -105,17 +105,21 @@ def perception_step(Rover):
     warped = perspect_transform(img, source, destination)
     # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
     (color_select, color_not_select, rock) = color_thresh(warped)
-    # 4) Update Rover.vision_image (this will be displayed on left side of screen)
-        # Example: Rover.vision_image[:,:,0] = obstacle color-thresholded binary image
-        #          Rover.vision_image[:,:,1] = rock_sample color-thresholded binary image
-        #          Rover.vision_image[:,:,2] = navigable terrain color-thresholded binary image
-    Rover.vision_image[:,:,0] = color_not_select
-    Rover.vision_image[:,:,1] = rock
-    Rover.vision_image[:,:,2] = color_select
+
+
+
+    # 4) Update Rover.vision_image (this will be displayed on left side of screen
+    Rover.vision_image[:,:,0] = color_not_select * 255
+    Rover.vision_image[:,:,1] = rock * 255
+    Rover.vision_image[:,:,2] = color_select * 255
     # 5) Convert map image pixel values to rover-centric coords
     color_select_x, color_select_y = rover_coords(color_select)
     color_not_select_x, color_not_select_y = rover_coords(color_not_select)
     rock_x, rock_y = rover_coords(rock)
+
+    if np.sum(rock) > 0:
+        Rover.detected = True
+        Rover.samples_pos = (rock_x, rock_y)
     # 6) Convert rover-centric pixel values to world coordinates
     scale = 10
     world_size = 200
@@ -126,6 +130,7 @@ def perception_step(Rover):
     obstacle_x_world, obstacle_y_world = pix_to_world(color_not_select_x, color_not_select_y, xpos, ypos, yaw, world_size, scale)
     rock_x_world, rock_y_world = pix_to_world(rock_x, rock_y, xpos, ypos, yaw, world_size, scale)
     navigable_x_world, navigable_y_world = pix_to_world(color_select_x, color_select_y, xpos, ypos, yaw, world_size, scale)
+
 
     # 7) Update Rover worldmap (to be displayed on right side of screen)
         # Example: Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
@@ -142,4 +147,3 @@ def perception_step(Rover):
     return Rover
 
 
-    return Rover

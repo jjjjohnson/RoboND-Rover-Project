@@ -21,7 +21,7 @@ import time
 from perception import perception_step
 from decision import decision_step
 from supporting_functions import update_rover, create_output_images
-# Initialize socketio server and Flask application 
+# Initialize socketio server and Flask application
 # (learn more at: https://python-socketio.readthedocs.io/en/latest/)
 sio = socketio.Server()
 app = Flask(__name__)
@@ -31,7 +31,7 @@ app = Flask(__name__)
 # and y-axis increasing downward.
 ground_truth = mpimg.imread('../calibration_images/map_bw.png')
 # This next line creates arrays of zeros in the red and blue channels
-# and puts the map into the green channel.  This is why the underlying 
+# and puts the map into the green channel.  This is why the underlying
 # map output looks green in the display image
 ground_truth_3d = np.dstack((ground_truth*0, ground_truth*255, ground_truth*0)).astype(np.float)
 
@@ -65,16 +65,18 @@ class RoverState():
         # Image output from perception step
         # Update this image to display your intermediate analysis steps
         # on screen in autonomous mode
-        self.vision_image = np.zeros((160, 320, 3), dtype=np.float) 
+        self.vision_image = np.zeros((160, 320, 3), dtype=np.float)
         # Worldmap
         # Update this image with the positions of navigable terrain
         # obstacles and rock samples
-        self.worldmap = np.zeros((200, 200, 3), dtype=np.float) 
+        self.worldmap = np.zeros((200, 200, 3), dtype=np.float)
         self.samples_pos = None # To store the actual sample positions
         self.samples_found = 0 # To count the number of samples found
         self.near_sample = False # Set to True if within reach of a rock sample
         self.pick_up = False # Set to True to trigger rock pickup
-# Initialize our rover 
+        self.fully_stopped = False
+        self.detected = False
+# Initialize our rover
 Rover = RoverState()
 
 
@@ -98,7 +100,7 @@ def telemetry(sid, data):
             # The action step!  Send commands to the rover!
             commands = (Rover.throttle, Rover.brake, Rover.steer)
             send_control(commands, out_image_string1, out_image_string2)
- 
+
             # If in a state where want to pickup a rock send pickup command
             if Rover.pick_up:
                 send_pickup()
@@ -146,9 +148,9 @@ def send_control(commands, image_string1, image_string2):
         data,
         skip_sid=True)
 
-# Define a function to send the "pickup" command 
+# Define a function to send the "pickup" command
 def send_pickup():
-    print("Picking up")
+    # print("Picking up")
     pickup = {}
     sio.emit(
         "pickup",
@@ -165,7 +167,7 @@ if __name__ == '__main__':
         help='Path to image folder. This is where the images from the run will be saved.'
     )
     args = parser.parse_args()
-    
+
     os.system('rm -rf IMG_stream/*')
     if args.image_folder != '':
         print("Creating image folder at {}".format(args.image_folder))
@@ -177,7 +179,7 @@ if __name__ == '__main__':
         print("Recording this run ...")
     else:
         print("NOT recording this run ...")
-    
+
     # wrap Flask application with socketio's middleware
     app = socketio.Middleware(sio, app)
 
