@@ -20,9 +20,9 @@
 
 [//]: # (Image References)
 
-[image1]: ./calibration_images/example_grid_rock.png
-[image2]: ./calibration_images/rock_transformed.png
-[image3]: ./calibration_images/threshold.png
+[image1]: ../calibration_images/example_grid_rock.png
+[image2]: ../calibration_images/rock_transformed.png
+[image3]: ../calibration_images/threshold.png
 
 ### Jupyter notebook Data Analysis
 
