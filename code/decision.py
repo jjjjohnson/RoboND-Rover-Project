@@ -1,14 +1,14 @@
 import numpy as np
 previous_steer = 0
 
-def forward_is_clean(Rover):
-    return np.sum(Rover.terrain[120:130, 130:160]) > 100
+# def forward_is_clean(Rover):
+#     return np.sum(Rover.terrain[120:130, 130:160]) > 50
 
-def left_is_clean(Rover):
-    return np.sum(Rover.terrain[120:130, 120:150]) > 100
+# def left_is_clean(Rover):
+#     return np.sum(Rover.terrain[120:130, 120:150]) > 50
 
-def right_is_clean(Rover):
-    return np.sum(Rover.terrain[120:130, 160:190]) > 100
+# def right_is_clean(Rover):
+#     return np.sum(Rover.terrain[120:130, 160:190]) > 50
 
 def drive_toward_sample(Rover):
     global previous_steer
@@ -34,10 +34,10 @@ def drive_toward_sample(Rover):
         angles = np.arctan2(sample_y, sample_x)
         Rover.steer = np.clip(np.mean(angles * 180/np.pi), -15, 15)
         Rover.brake = 0
-        if abs(Rover.steer) - previous_steer > 0:
+        if abs(Rover.steer - previous_steer) > 0.01:
             Rover.throttle = 0
         else:
-            Rover.throttle = 0.1
+            Rover.throttle = 0.2
         previous_steer = Rover.steer
 
 
@@ -50,13 +50,10 @@ def decision_step(Rover):
 
     # Example:
     # Check if we have vision data to make decisions with
-    left_clean = left_is_clean(Rover)
-    right_clean = right_is_clean(Rover)
-    forward_clean = forward_is_clean(Rover)
 
-    print("left_clean", np.sum(Rover.terrain[120:130, 120:150]),\
-         "right_clean", np.sum(Rover.terrain[120:130, 160:190]), \
-         "forward_clean", np.sum(Rover.terrain[120:130, 130:160]))
+    # print("left_clean", np.sum(Rover.terrain[120:130, 120:150]),\
+    #      "right_clean", np.sum(Rover.terrain[120:130, 160:190]), \
+    #      "forward_clean", np.sum(Rover.terrain[120:130, 130:160]))
     if Rover.nav_angles is not None:
         if Rover.detected:
             Rover.mode = 'pickup'
@@ -74,20 +71,7 @@ def decision_step(Rover):
                 Rover.brake = 0
                 # Set steering to average angle clipped to the range +/- 15
                 Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi), -15, 15)
-
-                if not (left_clean or right_clean or forward_clean):
-                    Rover.throttle = 0
-                    # Set brake to stored brake value
-                    Rover.brake = Rover.brake_set
-                    Rover.steer = 0
-                    Rover.mode = 'stop'
-                else:
-                    if Rover.steer < -10:
-                        if not left_clean: Rover.steer = -10
-                    elif Rover.steer > 10:
-                        if not right_clean: Rover.steer = 10
-
-            # If there's a lack of navigable terrain pixels or found a rocket then go to 'stop' mode
+            # If there's a lack of navigable terrain pixels then go to 'stop' mode
             elif len(Rover.nav_angles) < Rover.stop_forward:
                     # Set mode to "stop" and hit the brakes!
                     Rover.throttle = 0
@@ -107,43 +91,22 @@ def decision_step(Rover):
                 Rover.steer = 0
             # If we're not moving (vel < 0.2) then do something else
             elif Rover.vel <= 0.2:
-                Rover.throttle = 0
-                # Release the brake to allow turning
-                Rover.brake = 0
-                # Turn range is +/- 15 degrees, when stopped the next line will induce 4-wheel turning
+                # Now we're stopped and we have vision data to see if there's a path forward
+                if len(Rover.nav_angles) < Rover.go_forward:
+                    Rover.throttle = 0
+                    # Release the brake to allow turning
+                    Rover.brake = 0
+                    # Turn range is +/- 15 degrees, when stopped the next line will induce 4-wheel turning
+                    Rover.steer = -15 # Could be more clever here about which way to turn
+                # If we're stopped but see sufficient navigable terrain in front then go!
                 if len(Rover.nav_angles) >= Rover.go_forward:
-                    if left_clean:
-                        Rover.steer = -10 # Could be more clever here about which way to turn
-                        Rover.mode = 'forward'
-                    elif right_clean:
-                        Rover.steer = 10
-                        Rover.mode = 'forward'
-                else:
-                    Rover.steer = -20
-                # # Now we're stopped and we have vision data to see if there's a path forward
-                # if len(Rover.nav_angles) < Rover.go_forward:
-                #     Rover.throttle = 0
-                #     # Release the brake to allow turning
-                #     Rover.brake = 0
-                #     # Turn range is +/- 15 degrees, when stopped the next line will induce 4-wheel turning
-                #     if left_clean:
-                #         Rover.steer = -10 # Could be more clever here about which way to turn
-
-                #     elif right_clean:
-                #         Rover.steer = 10
-
-                #     else:
-                #         Rover.steer = -20
-
-                # # If we're stopped but see sufficient navigable terrain in front then go!
-                # if len(Rover.nav_angles) >= Rover.go_forward:
-                #     # Set throttle back to stored value
-                #     Rover.throttle = Rover.throttle_set
-                #     # Release the brake
-                #     Rover.brake = 0
-                #     # Set steer to mean angle
-                #     Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi), -15, 15)
-                #     Rover.mode = 'forward'
+                    # Set throttle back to stored value
+                    Rover.throttle = Rover.throttle_set
+                    # Release the brake
+                    Rover.brake = 0
+                    # Set steer to mean angle
+                    Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi), -15, 15)
+                    Rover.mode = 'forward'
     # Just to make the rover do something
     # even if no modifications have been made to the code
     else:
