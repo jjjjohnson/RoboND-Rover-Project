@@ -71,11 +71,13 @@ class RoverState():
         # obstacles and rock samples
         self.worldmap = np.zeros((200, 200, 3), dtype=np.float)
         self.samples_pos = None # To store the actual sample positions
+        self.measured_samples_pos = None # To store the measured sample position
         self.samples_found = 0 # To count the number of samples found
         self.near_sample = False # Set to True if within reach of a rock sample
         self.pick_up = False # Set to True to trigger rock pickup
         self.fully_stopped = False
         self.detected = False
+        self.terrain = None
 # Initialize our rover
 Rover = RoverState()
 

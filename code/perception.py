@@ -24,7 +24,7 @@ def color_thresh(img, rgb_thresh=(160, 160, 160)):
         ypos, xpos = rock.nonzero()
         ave_y, ave_x = int(np.mean(ypos)), int(np.mean(xpos))
         rock = np.zeros_like(img[:,:,0])
-        l = 5 # the length / 2 of rectangular
+        l = 2 # the length / 2 of rectangular
         rock[ave_y-l:ave_y+l, ave_x-l:ave_x+l] = 1
     # Return the binary image
     return (color_select, color_not_select, rock)
@@ -35,8 +35,8 @@ def rover_coords(binary_img):
     ypos, xpos = binary_img.nonzero()
     # Calculate pixel positions with reference to the rover position being at the
     # center bottom of the image.
-    x_pixel = np.absolute(ypos - binary_img.shape[0]).astype(np.float)
-    y_pixel = -(xpos - binary_img.shape[0]).astype(np.float)
+    x_pixel = -(ypos - binary_img.shape[0]).astype(np.float)
+    y_pixel = -(xpos - binary_img.shape[1]/2).astype(np.float)
     return x_pixel, y_pixel
 
 
@@ -106,7 +106,7 @@ def perception_step(Rover):
     # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
     (color_select, color_not_select, rock) = color_thresh(warped)
 
-
+    Rover.terrain = color_select
 
     # 4) Update Rover.vision_image (this will be displayed on left side of screen
     Rover.vision_image[:,:,0] = color_not_select * 255
@@ -119,7 +119,7 @@ def perception_step(Rover):
 
     if np.sum(rock) > 0:
         Rover.detected = True
-        Rover.samples_pos = (rock_x, rock_y)
+        Rover.measured_samples_pos = (rock_x, rock_y)
     # 6) Convert rover-centric pixel values to world coordinates
     scale = 10
     world_size = 200
@@ -133,9 +133,6 @@ def perception_step(Rover):
 
 
     # 7) Update Rover worldmap (to be displayed on right side of screen)
-        # Example: Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
-        #          Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
-        #          Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
     Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
     Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
     Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
